@@ -1,0 +1,25 @@
+# === 外部大文件与备份 ===
+*.tar.gz
+*.bak.*
+# 这里的 core.* 可以拦截 strapi-app 里的 3.2G 大文件
+**/core.*
+
+# === 外部持久化目录 ===
+pgdata/
+letsencrypt/
+tmp-yml/
+
+# === Strapi 项目内部过滤 ===
+# 使用 **/ 可以匹配任何层级下的这些文件夹
+**/node_modules/
+**/dist/
+**/.cache/
+**/.tmp/
+
+# 环境变量文件（通常包含敏感密码）
+**/.env
+**/.env.example
+!**/.env.example  # 如果你想保留模板文件作为参考，可以加这行排除过滤
+
+# Strapi 运行时生成的隐藏目录
+**/.strapi/

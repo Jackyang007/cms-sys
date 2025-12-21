@@ -1,0 +1,12 @@
+{
+  "collectionName": "components_activity_ctas",
+  "info": {
+    "displayName": "CTA",
+    "description": "按钮文案"
+  },
+  "options": {},
+  "attributes": {
+    "reportText": { "type": "string", "default": "活动海报" },
+    "signupText": { "type": "string", "default": "立即报名参与" }
+  }
+}

@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+  # ---------------------------
+  # MinIO 对象存储（含控制台）- 本机开发版（不走 Traefik/域名）
+  # ---------------------------
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: minio5
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+      # 本机开发：直接用 localhost + http
+      MINIO_SERVER_URL: http://localhost:9000
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+    command: server /data --console-address ":9001"
+    volumes:
+      - ${MINIO_DATA}:/data
+      - ${MINIO_CONFIG}:/root/.minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - web
+
+  # ---------------------------
+  # PostgreSQL 数据库
+  # ---------------------------
+  postgres:
+    image: postgres:15
+    container_name: cms_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi
+      POSTGRES_DB: strapidb
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - web
+
+  # ---------------------------
+  # Strapi CMS（对接 MinIO）- 本机开发版（不走 Traefik/域名）
+  # ---------------------------
+  strapi:
+    image: node:20-bullseye
+    container_name: cms_app
+    working_dir: /srv/app
+    command: >
+      bash -lc "
+      node -v &&
+      corepack enable &&
+      corepack prepare yarn@1.22.22 --activate &&
+      yarn -v &&
+      yarn install --network-timeout 600000 &&
+      if [ ! -d build ]; then yarn build; fi &&
+      yarn start"
+    restart: unless-stopped
+    environment:
+      # NODE_ENV: production
+      NODE_ENV: development
+    
+      NODE_OPTIONS: --max-old-space-size=4096
+      JWT_SECRET: "iSgCaXVzt9a6QZHjedu2+1adjfUYkuMZ6VEq9BmziYA="
+
+      # 国内源 + sharp 二进制镜像
+      NPM_CONFIG_REGISTRY: https://registry.npmmirror.com
+      YARN_REGISTRY: https://registry.npmmirror.com
+      npm_config_sharp_binary_host: https://npmmirror.com/mirrors/sharp
+      npm_config_sharp_libvips_binary_host: https://npmmirror.com/mirrors/sharp-libvips
+      SHARP_IGNORE_GLOBAL_LIBVIPS: "1"
+
+      # 数据库
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapidb
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: strapi
+
+      # MinIO（S3 兼容）—— 关键：容器内访问用 http://minio:9000
+      STRAPI_PLUGIN_UPLOAD_PROVIDER: s3
+      STRAPI_PLUGIN_UPLOAD_PROVIDER_OPTIONS__S3_OPTIONS__ENDPOINT: http://minio:9000
+      STRAPI_PLUGIN_UPLOAD_PROVIDER_OPTIONS__S3_OPTIONS__FORCE_PATH_STYLE: "true"
+      STRAPI_PLUGIN_UPLOAD_PROVIDER_OPTIONS__S3_OPTIONS__REGION: us-east-1
+      STRAPI_PLUGIN_UPLOAD_PROVIDER_OPTIONS__S3_OPTIONS__SIGNATURE_VERSION: v4
+      STRAPI_PLUGIN_UPLOAD_PROVIDER_OPTIONS__BUCKET: uploads
+      STRAPI_PLUGIN_UPLOAD_PROVIDER_OPTIONS__CREDENTIALS__ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      STRAPI_PLUGIN_UPLOAD_PROVIDER_OPTIONS__CREDENTIALS__SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+
+      STRAPI_TELEMETRY_DISABLED: "true"
+
+    volumes:
+      - ./strapi-app:/srv/app
+
+    depends_on:
+      - postgres
+      - minio
+
+    # 本机开发：直接暴露 Strapi 端口
+    ports:
+      - "11337:1337"
+
+    networks:
+      - web
+
+networks:
+  web:
+    name: minio-stack_web
+    driver: bridge

@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --log.level=INFO
+      - --api.dashboard=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      # ⬇️ 文件提供者配置（让 Traefik 识别 minio.yml）
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      # ⬇️ ACME 证书配置
+      - --certificatesresolvers.lehttp.acme.httpchallenge=true
+      - --certificatesresolvers.lehttp.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.lehttp.acme.email=admin@coisini1024.com
+      - --certificatesresolvers.lehttp.acme.storage=/letsencrypt/acme.json
+      # ⬇️ 端口定义（80/443）
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/minio-stack/letsencrypt:/letsencrypt:rw
+      # ⬇️ 动态配置目录（宿主机 -> 容器）
+      - /opt/minio-stack/traefik:/etc/traefik
+    networks:
+      - web
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z   # ✅ 推荐旧版带可视化UI
+    container_name: minio5
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      # 设置跳转与签名使用的域名
+      MINIO_SERVER_URL: https://s3.coisini1024.com
+      MINIO_BROWSER_REDIRECT_URL: https://console.coisini1024.com
+    command: server /data --console-address ":9001"
+    volumes:
+      - ${MINIO_DATA}:/data
+      - ${MINIO_CONFIG}:/root/.minio
+    ports:
+      - "127.0.0.1:9000:9000"   # 仅本机访问
+      - "127.0.0.1:9001:9001"   # 仅本机访问
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge

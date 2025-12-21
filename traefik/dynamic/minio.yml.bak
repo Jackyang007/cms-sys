@@ -1,0 +1,22 @@
+http:
+  routers:
+    minio-api:
+      rule: "Host(`s3.coisini1024.com`)"
+      entryPoints: ["websecure"]
+      service: minio-api-svc
+      tls: { certResolver: lehttp }
+    minio-console:
+      rule: "Host(`console.coisini1024.com`)"
+      entryPoints: ["websecure"]
+      service: minio-console-svc
+      tls: { certResolver: lehttp }
+  services:
+    minio-api-svc:
+      loadBalancer:
+        servers:
+          - url: "http://minio:9000"
+    minio-console-svc:
+      loadBalancer:
+        servers:
+          - url: "http://minio:9001"
+

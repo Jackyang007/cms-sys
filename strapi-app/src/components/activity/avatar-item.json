@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_activity_avatar_items",
+  "info": {
+    "displayName": "AvatarItem",
+    "description": "头像滚动条条目"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "avatarUrl": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

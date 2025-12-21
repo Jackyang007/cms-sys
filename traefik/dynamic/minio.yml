@@ -1,0 +1,60 @@
+http:
+  middlewares:
+    # —— 通用安全头（HSTS、XSS、NoSniff 等）
+    minio-sec-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        frameDeny: false  # 控制台需要内嵌渲染，保持 false
+
+    # —— MinIO API 的 CORS（仅当你需要跨域直传/浏览器访问时启用）
+    # 小程序仅 "下载图片" 不需要 CORS；如需前端直传，保留并按需填域名
+    minio-cors:
+      headers:
+        accessControlAllowCredentials: true
+        accessControlAllowMethods: ["GET","HEAD","PUT","POST","DELETE","OPTIONS"]
+        accessControlAllowHeaders: ["*"]
+        accessControlAllowOriginList:
+          - "https://your-miniapp-domain.com"   # 小程序 H5/管理台等前端域名（按需替换/增减）
+          - "https://console.coisini1024.com"
+          - "https://s3.coisini1024.com"
+        addVaryHeader: true
+
+  routers:
+    # —— S3 API（对象读写）
+    minio-api:
+      rule: Host(`s3.coisini1024.com`)
+      entryPoints: ["websecure"]
+      service: minio-api-svc
+      middlewares:
+        - minio-sec-headers
+        # - minio-cors        # 仅在需要跨域时取消注释
+      tls:
+        certResolver: lehttp
+
+    # —— 可视化控制台
+    minio-console:
+      rule: Host(`console.coisini1024.com`)
+      entryPoints: ["websecure"]
+      service: minio-console-svc
+      middlewares:
+        - minio-sec-headers
+      tls:
+        certResolver: lehttp
+
+  services:
+    minio-api-svc:
+      loadBalancer:
+        servers:
+          - url: "http://minio:9000"
+        passHostHeader: true   # 把原域名透传给后端（签名/重定向更稳定）
+
+    minio-console-svc:
+      loadBalancer:
+        servers:
+          - url: "http://minio:9001"
+        passHostHeader: true
+
