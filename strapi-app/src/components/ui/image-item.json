@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_ui_image_items",
+  "info": {
+    "displayName": "image-item",
+    "description": "图片项：支持直接填 URL 或上传媒体文件。"
+  },
+  "options": {},
+  "attributes": {
+    "url": {
+      "type": "string",
+      "required": false
+    },
+    "file": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "alt": {
+      "type": "string",
+      "required": false
+    }
+  }
+}

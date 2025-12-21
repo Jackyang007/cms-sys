@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_ui_ctas",
+  "info": {
+    "displayName": "cta",
+    "description": "CTA 文案：活动引导文字。"
+  },
+  "options": {},
+  "attributes": {
+    "reportText": {
+      "type": "string",
+      "required": false,
+      "default": "活动海报"
+    },
+    "signupText": {
+      "type": "string",
+      "required": false,
+      "default": "立即报名参与"
+    }
+  }
+}

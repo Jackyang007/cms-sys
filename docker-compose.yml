@@ -60,13 +60,13 @@ services:
       corepack prepare yarn@1.22.22 --activate &&
       yarn -v &&
       yarn install --network-timeout 600000 &&
-      if [ ! -d build ]; then yarn build; fi &&
-      yarn start"
+      yarn develop
+      "
+
     restart: unless-stopped
     environment:
-      # NODE_ENV: production
-      NODE_ENV: development
-    
+      NODE_ENV: production
+      # NODE_ENV: development
       NODE_OPTIONS: --max-old-space-size=4096
       JWT_SECRET: "iSgCaXVzt9a6QZHjedu2+1adjfUYkuMZ6VEq9BmziYA="
 

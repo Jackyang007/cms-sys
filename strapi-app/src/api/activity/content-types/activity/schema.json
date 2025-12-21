@@ -5,80 +5,87 @@
     "singularName": "activity",
     "pluralName": "activities",
     "displayName": "Activity",
-    "description": "小程序活动配置"
+    "description": "Mini program activity configuration."
   },
   "options": {
     "draftAndPublish": true
   },
-  "pluginOptions": {},
   "attributes": {
-    "title": {
+    "meta_title": {
       "type": "string",
       "required": true
     },
-    "version": {
-      "type": "string"
+    "meta_version": {
+      "type": "string",
+      "required": false
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "meta_title",
+      "required": true
+    },
+    "startTime": {
+      "type": "datetime",
+      "required": false
     },
     "endTime": {
       "type": "datetime",
       "required": true
     },
-
-    "bannerImages": {
-      "type": "json",
-      "default": []
+    "status": {
+      "type": "enumeration",
+      "enum": ["draft", "online", "offline"],
+      "default": "draft",
+      "required": true
     },
-
+    "sort": {
+      "type": "integer",
+      "required": false,
+      "default": 100
+    },
+    "banner": {
+      "type": "component",
+      "repeatable": false,
+      "component": "ui.banner",
+      "required": false
+    },
     "highlights": {
       "type": "json",
-      "default": []
+      "required": false
     },
-
     "minDiscountCount": {
       "type": "integer",
-      "default": 30,
-      "min": 0
+      "required": false,
+      "default": 30
     },
-
     "currentOrderCount": {
       "type": "integer",
-      "default": 0,
-      "min": 0
+      "required": false,
+      "default": 0
     },
-
     "avatars": {
       "type": "component",
       "repeatable": true,
-      "component": "activity.avatar-item"
+      "component": "ui.avatar-item",
+      "required": false
     },
-
     "detailImages": {
-      "type": "json",
-      "default": []
+      "type": "component",
+      "repeatable": true,
+      "component": "ui.image-item",
+      "required": false
     },
-
     "ctas": {
       "type": "component",
       "repeatable": false,
-      "component": "activity.cta"
+      "component": "ui.cta",
+      "required": false
     },
-
     "merchant": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::merchant.merchant",
       "inversedBy": "activities"
-    },
-
-    "isFeatured": {
-      "type": "boolean",
-      "default": false
-    },
-
-    "slug": {
-      "type": "uid",
-      "targetField": "title",
-      "required": true
     }
   }
 }

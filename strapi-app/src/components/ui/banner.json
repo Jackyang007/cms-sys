@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_ui_banners",
+  "info": {
+    "displayName": "banner",
+    "description": "Banner 组件：包含多张图片。"
+  },
+  "options": {},
+  "attributes": {
+    "images": {
+      "type": "component",
+      "repeatable": true,
+      "component": "ui.image-item",
+      "required": false
+    }
+  }
+}

@@ -5,7 +5,7 @@
     "singularName": "merchant",
     "pluralName": "merchants",
     "displayName": "Merchant",
-    "description": "商户/门店信息"
+    "description": "Merchant / dealer basic information."
   },
   "options": {
     "draftAndPublish": true
@@ -13,14 +13,20 @@
   "pluginOptions": {},
   "attributes": {
     "name": { "type": "string", "required": true },
-    "address": { "type": "string" },
+    "address": { "type": "text" },
     "phone": { "type": "string" },
     "latitude": { "type": "decimal" },
     "longitude": { "type": "decimal" },
+    "status": {
+      "type": "enumeration",
+      "enum": ["active", "inactive"],
+      "default": "active"
+    },
     "activities": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::activity.activity"
+      "target": "api::activity.activity",
+      "mappedBy": "merchant"
     }
   }
 }

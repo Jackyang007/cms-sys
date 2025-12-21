@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_ui_avatar_items",
+  "info": {
+    "displayName": "avatar-item",
+    "description": "头像项：用于头像滚动列表。"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "avatarUrl": {
+      "type": "string",
+      "required": false
+    },
+    "avatarFile": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "phoneMask": {
+      "type": "string",
+      "required": false
+    }
+  }
+}
