@@ -381,6 +381,11 @@ export interface ApiActivityActivity extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    activityStatus: Schema.Attribute.Enumeration<
+      ['draft', 'online', 'offline']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'online'>;
     avatars: Schema.Attribute.Component<'ui.avatar-item', true>;
     banner: Schema.Attribute.Component<'ui.banner', false>;
     createdAt: Schema.Attribute.DateTime;
@@ -405,9 +410,6 @@ export interface ApiActivityActivity extends Struct.CollectionTypeSchema {
     slug: Schema.Attribute.UID<'meta_title'> & Schema.Attribute.Required;
     sort: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<100>;
     startTime: Schema.Attribute.DateTime;
-    status: Schema.Attribute.Enumeration<['draft', 'online', 'offline']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'draft'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -442,11 +444,11 @@ export interface ApiMerchantMerchant extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     longitude: Schema.Attribute.Decimal;
+    merchantStatus: Schema.Attribute.Enumeration<['active', 'inactive']> &
+      Schema.Attribute.DefaultTo<'active'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     phone: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    status: Schema.Attribute.Enumeration<['active', 'inactive']> &
-      Schema.Attribute.DefaultTo<'active'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

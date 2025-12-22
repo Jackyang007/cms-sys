@@ -32,10 +32,14 @@
       "type": "datetime",
       "required": true
     },
-    "status": {
+    "activityStatus": {
       "type": "enumeration",
-      "enum": ["draft", "online", "offline"],
-      "default": "draft",
+      "enum": [
+        "draft",
+        "online",
+        "offline"
+      ],
+      "default": "online",
       "required": true
     },
     "sort": {

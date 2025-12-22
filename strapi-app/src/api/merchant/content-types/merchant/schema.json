@@ -12,14 +12,28 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "name": { "type": "string", "required": true },
-    "address": { "type": "text" },
-    "phone": { "type": "string" },
-    "latitude": { "type": "decimal" },
-    "longitude": { "type": "decimal" },
-    "status": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "address": {
+      "type": "text"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "decimal"
+    },
+    "longitude": {
+      "type": "decimal"
+    },
+    "merchantStatus": {
       "type": "enumeration",
-      "enum": ["active", "inactive"],
+      "enum": [
+        "active",
+        "inactive"
+      ],
       "default": "active"
     },
     "activities": {

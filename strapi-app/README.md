@@ -1,3 +1,25 @@
+# Strapi App
+
+## 项目说明
+本项目为 Strapi 服务，已验证以下接口可用。
+
+## 已验证接口
+基础地址：`http://127.0.0.1:11337`
+
+- `GET /api/merchants`
+- `GET /api/activities`
+- `GET /api/activities/custom-list`
+
+示例：
+
+```
+http://127.0.0.1:11337/api/merchants
+http://127.0.0.1:11337/api/activities
+http://127.0.0.1:11337/api/activities/custom-list
+```
+
+---
+
 # 🚀 Getting started with Strapi
 
 Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.

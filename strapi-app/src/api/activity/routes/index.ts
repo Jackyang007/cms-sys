@@ -17,5 +17,21 @@ export default {
         auth: false,
       },
     },
+    {
+      method: 'GET',
+      path: '/activities/:id',
+      handler: 'activity.detail',
+      config: {
+        auth: false,
+      },
+    },
+    {
+      method: 'PUT',
+      path: '/activities/:id',
+      handler: 'activity.update',
+      config: {
+        auth: false,
+      },
+    },
   ],
 };
