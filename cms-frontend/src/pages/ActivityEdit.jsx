@@ -61,6 +61,7 @@ const toAvatarItems = (items) =>
       name: item.name || '',
       avatarUrl: item.avatarUrl || item.avatar || '',
       phoneMask: item.phoneMask || null,
+      avatarFile: item.avatarFile || null,
     }));
 
 const statusBadgeVariant = (value) => {
@@ -86,12 +87,7 @@ const Section = ({ title, description, children }) => (
   </Box>
 );
 
-const BannerImages = ({
-  items,
-  onChange,
-  onUpload,
-  uploading,
-}) => {
+const BannerImages = ({ items, onChange, onUpload, uploading }) => {
   const inputRef = useRef(null);
 
   return (
@@ -164,7 +160,11 @@ const BannerImages = ({
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 </Box>
-                <Typography variant="pi" textColor="neutral700" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <Typography
+                  variant="pi"
+                  textColor="neutral700"
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
                   {url}
                 </Typography>
               </Flex>
@@ -193,6 +193,8 @@ export default function ActivityEdit() {
   const [notice, setNotice] = useState('');
   const [merchants, setMerchants] = useState([]);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadingAvatarIndex, setUploadingAvatarIndex] = useState(null);
+  const [openAvatarIndex, setOpenAvatarIndex] = useState(null);
 
   const [form, setForm] = useState({
     meta_title: '',
@@ -207,7 +209,7 @@ export default function ActivityEdit() {
     highlightsRaw: '[]',
     bannerImagesRaw: '[]',
     detailImagesRaw: '[]',
-    avatarsRaw: '[]',
+    avatars: [],
     ctaReportText: '',
     ctaSignupText: '',
     merchantId: '',
@@ -222,7 +224,6 @@ export default function ActivityEdit() {
     () => parseJsonArray(form.detailImagesRaw),
     [form.detailImagesRaw]
   );
-  const parsedAvatars = useMemo(() => parseJsonArray(form.avatarsRaw), [form.avatarsRaw]);
 
   useEffect(() => {
     let alive = true;
@@ -256,15 +257,12 @@ export default function ActivityEdit() {
             null,
             2
           ),
-          avatarsRaw: JSON.stringify(
-            (entry.avatars || []).map((item) => ({
-              name: item.name,
-              avatarUrl: item.avatarUrl,
-              phoneMask: item.phoneMask,
-            })),
-            null,
-            2
-          ),
+          avatars: (entry.avatars || []).map((item) => ({
+            name: item.name || '',
+            avatarUrl: item.avatarUrl || '',
+            phoneMask: item.phoneMask || '',
+            avatarFile: item.avatarFile?.id || null,
+          })),
           ctaReportText: entry.ctas?.reportText || '',
           ctaSignupText: entry.ctas?.signupText || '',
           merchantId: entry.merchant?.id ? String(entry.merchant.id) : '',
@@ -304,6 +302,35 @@ export default function ActivityEdit() {
     updateField('bannerImagesRaw')(JSON.stringify(nextItems || [], null, 2));
   };
 
+  const updateAvatar = (index, nextValue) => {
+    setForm((prev) => {
+      const next = [...prev.avatars];
+      next[index] = { ...next[index], ...nextValue };
+      return { ...prev, avatars: next };
+    });
+  };
+
+  const addAvatar = () => {
+    setForm((prev) => ({
+      ...prev,
+      avatars: [
+        ...prev.avatars,
+        { name: '', avatarUrl: '', phoneMask: '', avatarFile: null },
+      ],
+    }));
+    setOpenAvatarIndex(form.avatars.length);
+  };
+
+  const removeAvatar = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      avatars: prev.avatars.filter((_, idx) => idx !== index),
+    }));
+    if (openAvatarIndex === index) {
+      setOpenAvatarIndex(null);
+    }
+  };
+
   const onBannerUpload = async (event) => {
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
@@ -322,11 +349,32 @@ export default function ActivityEdit() {
     }
   };
 
+  const onAvatarUpload = async (index, event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+    setUploadingAvatarIndex(index);
+    setError('');
+    try {
+      const uploaded = await apiUploadFiles(files);
+      const first = (uploaded || [])[0];
+      if (first?.url) {
+        updateAvatar(index, {
+          avatarUrl: first.url,
+          avatarFile: first.id || null,
+        });
+      }
+    } catch (err) {
+      setError(err.message || 'Upload failed.');
+    } finally {
+      setUploadingAvatarIndex(null);
+      event.target.value = '';
+    }
+  };
+
   const validateJsonInputs = () => {
     if (!parsedHighlights) return 'Highlights must be valid JSON array.';
     if (!parsedBannerImages) return 'Banner images must be valid JSON array.';
     if (!parsedDetailImages) return 'Detail images must be valid JSON array.';
-    if (!parsedAvatars) return 'Avatars must be valid JSON array.';
     return '';
   };
 
@@ -353,7 +401,7 @@ export default function ActivityEdit() {
           images: toImageItems(parsedBannerImages || []),
         },
         detailImages: toImageItems(parsedDetailImages || []),
-        avatars: toAvatarItems(parsedAvatars || []),
+        avatars: toAvatarItems(form.avatars || []),
         ctas,
         merchant: merchantId || null,
       },
@@ -516,14 +564,153 @@ export default function ActivityEdit() {
                   />
                 </Box>
                 <Box>
-                  <Typography variant="pi" fontWeight="bold">
-                    avatars
-                  </Typography>
-                  <JSONInput
-                    id="avatars"
-                    value={form.avatarsRaw}
-                    onChange={updateField('avatarsRaw')}
-                  />
+                  <Flex alignItems="center" justifyContent="space-between" wrap="wrap" gap={2}>
+                    <Typography variant="pi" fontWeight="bold">
+                      avatars ({form.avatars.length})
+                    </Typography>
+                    <Button variant="tertiary" size="S" onClick={addAvatar}>
+                      + Add entry
+                    </Button>
+                  </Flex>
+
+                  <Flex direction="column" gap={2} paddingTop={2}>
+                    {form.avatars.map((avatar, index) => {
+                      const isOpen = openAvatarIndex === index;
+                      const initial = avatar.name ? avatar.name[0] : '?';
+                      const avatarLabel = avatar.name || 'Unnamed';
+                      return (
+                        <Box
+                          key={`avatar-${index}`}
+                          borderColor={isOpen ? 'primary200' : 'neutral200'}
+                          borderWidth="1px"
+                          borderStyle="solid"
+                          hasRadius
+                          background={isOpen ? 'primary100' : 'neutral0'}
+                        >
+                          <Flex
+                            alignItems="center"
+                            justifyContent="space-between"
+                            padding={3}
+                            gap={3}
+                          >
+                            <Flex alignItems="center" gap={2} style={{ minWidth: 0 }}>
+                              <Box
+                                width="28px"
+                                height="28px"
+                                hasRadius
+                                background="neutral150"
+                                borderColor="neutral200"
+                                borderWidth="1px"
+                                borderStyle="solid"
+                                overflow="hidden"
+                              >
+                                {avatar.avatarUrl ? (
+                                  <img
+                                    src={toAbsoluteUrl(avatar.avatarUrl)}
+                                    alt={avatarLabel}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                ) : (
+                                  <Flex alignItems="center" justifyContent="center" height="100%">
+                                    <Typography variant="pi">{initial}</Typography>
+                                  </Flex>
+                                )}
+                              </Box>
+                              <Typography
+                                variant="pi"
+                                textColor="neutral800"
+                                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                              >
+                                {avatarLabel}
+                              </Typography>
+                            </Flex>
+                            <Flex gap={2} alignItems="center">
+                              <Button
+                                variant="tertiary"
+                                size="S"
+                                onClick={() => setOpenAvatarIndex(isOpen ? null : index)}
+                              >
+                                {isOpen ? '收起' : '编辑'}
+                              </Button>
+                              <Button
+                                variant="tertiary"
+                                size="S"
+                                onClick={() => removeAvatar(index)}
+                              >
+                                删除
+                              </Button>
+                            </Flex>
+                          </Flex>
+
+                          {isOpen ? (
+                            <Box padding={4} background="neutral100">
+                              <Flex gap={4} wrap="wrap">
+                                <TextInput
+                                  label="name"
+                                  value={avatar.name}
+                                  onChange={(e) => updateAvatar(index, { name: e.target.value })}
+                                />
+                                <TextInput
+                                  label="avatarUrl"
+                                  value={avatar.avatarUrl}
+                                  onChange={(e) => updateAvatar(index, { avatarUrl: e.target.value })}
+                                />
+                                <TextInput
+                                  label="phoneMask"
+                                  value={avatar.phoneMask}
+                                  onChange={(e) => updateAvatar(index, { phoneMask: e.target.value })}
+                                />
+                              </Flex>
+
+                              <Box paddingTop={3}>
+                                <Typography variant="pi" fontWeight="bold">
+                                  avatarFile
+                                </Typography>
+                                <Flex
+                                  alignItems="center"
+                                  gap={3}
+                                  paddingTop={2}
+                                  wrap="wrap"
+                                >
+                                  <Box
+                                    padding={4}
+                                    background="neutral0"
+                                    borderColor="neutral200"
+                                    borderWidth="1px"
+                                    borderStyle="dashed"
+                                    hasRadius
+                                    minWidth="240px"
+                                  >
+                                    <Typography variant="pi" textColor="neutral600">
+                                      点击上传图片或拖拽到此处
+                                    </Typography>
+                                  </Box>
+                                  <Button
+                                    variant="secondary"
+                                    size="S"
+                                    loading={uploadingAvatarIndex === index}
+                                    onClick={() => {
+                                      const input = document.getElementById(`avatar-file-${index}`);
+                                      if (input) input.click();
+                                    }}
+                                  >
+                                    上传头像
+                                  </Button>
+                                  <input
+                                    id={`avatar-file-${index}`}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(event) => onAvatarUpload(index, event)}
+                                    style={{ display: 'none' }}
+                                  />
+                                </Flex>
+                              </Box>
+                            </Box>
+                          ) : null}
+                        </Box>
+                      );
+                    })}
+                  </Flex>
                 </Box>
               </Flex>
             </Section>
